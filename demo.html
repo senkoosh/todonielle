@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Matcha Todo App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #4B5320;
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      padding-top: max(env(safe-area-inset-top), 20px);
+      padding-bottom: max(env(safe-area-inset-bottom), 20px);
+      padding-left: 16px;
+      padding-right: 16px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-top: 10px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      background: #dcfce7;
+      color: #15803d;
+      border: none;
+      padding: 8px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: none;
+      transition: transform 0.3s;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+
+    .back-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .back-btn.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      color: white;
+      font-size: 1.75rem;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mood-indicator {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+      animation: gentleBounce 2s ease-in-out infinite;
+      overflow: hidden;
+    }
+
+    .mood-indicator img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    @keyframes gentleBounce {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .add-btn {
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+      animation: wiggle 1s ease-in-out infinite;
+      width: 50px;
+      height: 50px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+
+    .add-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .add-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Mood History */
+    .mood-history {
+      background-color: white;
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .mood-history h3 {
+      color: #023716;
+      font-size: 0.875rem;
+      margin-bottom: 10px;
+    }
+
+    .mood-list {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .mood-item {
+      flex-shrink: 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .mood-item .emoji {
+      font-size: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 35px;
+    }
+
+    .mood-item .emoji img {
+      max-width: 35px;
+      max-height: 35px;
+      object-fit: contain;
+    }
+
+    .mood-item .time {
+      font-size: 0.7rem;
+      color: #196606;
+      margin-top: 4px;
+    }
+
+    /* Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      border: 2px solid #dcfce7;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .card:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .card h3 {
+      color: #15803d;
+      font-size: 1.375rem;
+      margin-bottom: 12px;
+      padding-right: 30px;
+    }
+
+    .card-info {
+      color: #ffffff;
+    }
+
+    .card-info .task-count {
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #22c55e;
+      transition: width 0.3s;
+    }
+
+    .progress-text {
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .delete-card-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #f87171;
+      font-size: 24px;
+      cursor: pointer;
+      opacity: 1;
+      transition: opacity 0.3s;
+      padding: 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Selected Card View */
+    .selected-card-view {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 12px rgba(0,0,0,0.1);
+      border: 2px solid #dcfce7;
+    }
+
+    .task-input-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .task-input {
+      flex: 1;
+      padding: 14px;
+      border: 2px solid #dcfce7;
+      border-radius: 12px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.3s;
+      -webkit-appearance: none;
+    }
+
+    .task-input:focus {
+      border-color: #22c55e;
+    }
+
+    .add-task-btn {
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .add-task-btn:active {
+      background: #16a34a;
+    }
+
+    .tasks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #dcfce7;
+      transition: all 0.3s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .task-item:active {
+      transform: scale(0.98);
+    }
+
+    .task-checkbox {
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      accent-color: #22c55e;
+      flex-shrink: 0;
+    }
+
+    .task-text {
+      flex: 1;
+      font-size: 1.05rem;
+      color: #1f2937;
+      word-break: break-word;
+    }
+
+    .task-text.completed {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    .delete-task-btn {
+      background: none;
+      border: none;
+      color: #f87171;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+      padding: 4px;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .delete-task-btn:active {
+      color: #dc2626;
+      transform: scale(0.9);
+    }
+
+    .empty-message {
+      text-align: center;
+      padding: 40px 20px;
+      color: #9ca3af;
+      font-size: 1.05rem;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 24px;
+      padding: 28px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 25px rgba(0,0,0,0.2);
+      border: 4px solid #dcfce7;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .modal h2 {
+      color: #15803d;
+      font-size: 1.75rem;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #dcfce7;
+      border-radius: 12px;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      outline: none;
+      -webkit-appearance: none;
+      box-sizing: border-box;
+    }
+
+    .modal-input:focus {
+      border-color: #22c55e;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .modal-btn.primary {
+      background: #22c55e;
+      color: white;
+    }
+
+    .modal-btn.primary:active {
+      background: #16a34a;
+    }
+
+    .modal-btn.secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .modal-btn.secondary:active {
+      background: #d1d5db;
+    }
+
+    /* Mood Modal */
+    .mood-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .mood-btn {
+      padding: 16px 10px;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mood-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .mood-btn .emoji {
+      font-size: 2.5rem;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 50px;
+      border-radius: 20px;
+    }
+
+    .mood-btn .emoji img {
+      max-width: 50px;
+      max-height: 50px;
+      object-fit: contain;
+      border-radius: 20px;
+    }
+
+    .mood-btn .label {
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #010101;
+    }
+
+    /* Motivation Toast */
+    .motivation-toast {
+      position: fixed;
+      top: max(env(safe-area-inset-top), 60px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #22c55e;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 50px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 999;
+      font-size: 1.05rem;
+      font-weight: bold;
+      display: none;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .motivation-toast.show {
+      display: block;
+    }
+
+    /* Celebration */
+    .celebration {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 998;
+      pointer-events: none;
+    }
+
+    .celebration.show {
+      display: flex;
+    }
+
+    .celebration-content {
+      text-align: center;
+      animation: bounceIn 1s ease-out;
+    }
+
+    .celebration-emoji {
+      font-size: 8rem;
+      animation: float 2s ease-in-out infinite;
+    }
+
+    .celebration-text {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #15803d;
+      margin-top: 20px;
+      animation: pulse 2s ease-in-out infinite;
+      padding: 0 20px;
+    }
+
+    /* Animations */
+    @keyframes swing {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-10deg); }
+      75% { transform: rotate(10deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes slideDown {
+      from { transform: translate(-50%, -100%); }
+      to { transform: translate(-50%, 0); }
+    }
+
+    @keyframes bounceIn {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Mood button animations */
+    .mood-btn:nth-child(1) { animation: swing 2s ease-in-out infinite; animation-delay: 0s; }
+    .mood-btn:nth-child(2) { animation: swing 2.2s ease-in-out infinite; animation-delay: 0.1s; }
+    .mood-btn:nth-child(3) { animation: swing 2.4s ease-in-out infinite; animation-delay: 0.2s; }
+    .mood-btn:nth-child(4) { animation: swing 2.6s ease-in-out infinite; animation-delay: 0.3s; }
+    .mood-btn:nth-child(5) { animation: swing 2.8s ease-in-out infinite; animation-delay: 0.4s; }
+    .mood-btn:nth-child(6) { animation: swing 3s ease-in-out infinite; animation-delay: 0.5s; }
+    .mood-btn:nth-child(7) { animation: swing 3.2s ease-in-out infinite; animation-delay: 0.6s; }
+    .mood-btn:nth-child(8) { animation: swing 3.4s ease-in-out infinite; animation-delay: 0.7s; }
+  </style>
+</head>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+</script>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <button class="back-btn" id="backBtn">←</button>
+        <h1 id="headerTitle">
+          <span id="moodIndicator" class="mood-indicator" style="background-color: #d1fae5;">
+            <img src="happy.png" alt="mood">
+          </span>
+          <span id="headerText">Elle</span>
+        </h1>
+      </div>
+      <button class="add-btn" id="addBtn">
+        <img src="add.png" alt="Add">
+      </button>
+    </div>
+
+    <!-- Mood History -->
+    <div class="mood-history" id="moodHistory" style="display: none;">
+      <h3>Today's Mood Journey</h3>
+      <div class="mood-list" id="moodList"></div>
+    </div>
+
+    <!-- Cards Grid -->
+    <div id="cardsGrid" class="cards-grid"></div>
+
+    <!-- Selected Card View -->
+    <div id="selectedCardView" style="display: none;"></div>
+  </div>
+
+  <!-- Mood Modal -->
+  <div class="modal show" id="moodModal">
+    <div class="modal-content">
+      <h2>What's your mood?</h2>
+      <div class="mood-grid" id="moodGrid"></div>
+    </div>
+  </div>
+
+  <!-- New Card Modal -->
+  <div class="modal" id="newCardModal">
+    <div class="modal-content">
+      <h2>Create New List</h2>
+      <input type="text" class="modal-input" id="cardNameInput" placeholder="List name (e.g., Today's Goals)">
+      <div class="modal-buttons">
+        <button class="modal-btn primary" id="createCardBtn">Create List</button>
+        <button class="modal-btn secondary" id="cancelCardBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Motivation Toast -->
+  <div class="motivation-toast" id="motivationToast"></div>
+
+  <!-- Celebration -->
+  <div class="celebration" id="celebration">
+    <div class="celebration-content">
+      <div class="celebration-emoji">🍵</div>
+      <div class="celebration-text">All Done! Enjoy your matcha! 💚</div>
+    </div>
+  </div>
+
+  <script>
+    const MOODS = [
+      { emoji: 'happy.png', label: 'Happy', color: '#FFDA03', isImage: true },
+      { emoji: 'sad.png', label: 'Sad', color: '#151B54', isImage: true },
+      { emoji: 'sleepy.png', label: 'Sleepy', color: '#FF04C6', isImage: true },
+      { emoji: 'excited.png', label: 'Excited', color: '#FFA500', isImage: true },
+      { emoji: 'calm.png', label: 'Calm', color: '#AAF0C9 ', isImage: true },
+      { emoji: 'angry.png', label: 'Angry', color: '#7C0A02', isImage: true },
+      { emoji: 'stressed.png', label: 'Stressed', color: '#828282', isImage: true },
+      { emoji: 'meh.png', label: 'Meh', color: '#F0DAB6', isImage: true }
+    ];
+
+    const MOTIVATIONS = [
+      'Nice! ✨', 
+      'Keep it up yah! 🎉', 
+      'Amazing! 💚', 
+      'Keep going! 🌟',
+      'Wonderful! 🍵',
+      'Great job! ⭐'
+    ];
+
+    let moodHistory = [];
+    let cards = [];
+    let selectedCard = null;
+
+const STORAGE_KEY = "matcha_todo_data_v1";
+
+function saveAppData() {
+  const data = {
+    cards,
+    moodHistory
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadAppData() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return;
+
+  try {
+    const data = JSON.parse(saved);
+    cards = data.cards || [];
+    moodHistory = data.moodHistory || [];
+  } catch (e) {
+    console.error("Failed to load saved data", e);
+  }
+}
+
+
+    // Initialize mood grid
+    const moodGrid = document.getElementById('moodGrid');
+    MOODS.forEach(function(mood, index) {
+      const btn = document.createElement('button');
+      btn.className = 'mood-btn';
+      btn.style.backgroundColor = mood.color;
+      
+      const emojiHTML = mood.isImage 
+        ? '<img src="' + mood.emoji + '" alt="' + mood.label + '">'
+        : mood.emoji;
+      
+      btn.innerHTML = '<div class="emoji">' + emojiHTML + '</div><div class="label">' + mood.label + '</div>';
+      btn.onclick = function() { selectMood(mood); };
+      moodGrid.appendChild(btn);
+    });
+
+    function selectMood(mood) {
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      moodHistory.push({ ...mood, time });
+      
+      // Update mood indicator in header
+      const moodIndicator = document.getElementById('moodIndicator');
+      if (mood.isImage) {
+        moodIndicator.innerHTML = '<img src="' + mood.emoji + '" alt="' + mood.label + '">';
+      } else {
+        moodIndicator.textContent = mood.emoji;
+      }
+      moodIndicator.style.backgroundColor = mood.color;
+      
+      document.getElementById('moodModal').classList.remove('show');
+      updateMoodHistory();
+      saveAppData();
+
+    }
+
+    function updateMoodHistory() {
+      const moodHistoryEl = document.getElementById('moodHistory');
+      const moodList = document.getElementById('moodList');
+      
+      if (moodHistory.length > 0 && !selectedCard) {
+        moodHistoryEl.style.display = 'block';
+        moodList.innerHTML = moodHistory.map(function(mood) {
+          const emojiHTML = mood.isImage 
+            ? '<img src="' + mood.emoji + '" alt="' + mood.label + '">'
+            : mood.emoji;
+          
+          return '<div class="mood-item" style="background-color: ' + mood.color + '">' +
+            '<div class="emoji">' + emojiHTML + '</div>' +
+            '<div class="time">' + mood.time + '</div>' +
+            '</div>';
+        }).join('');
+      } else {
+        moodHistoryEl.style.display = 'none';
+      }
+    }
+
+    function renderCards() {
+      const cardsGrid = document.getElementById('cardsGrid');
+      
+      if (cards.length === 0) {
+        cardsGrid.innerHTML = '<div class="empty-message">No lists yet! Click the + button to create one 🍵</div>';
+        return;
+      }
+
+      cardsGrid.innerHTML = cards.map(function(card) {
+        const completed = card.tasks.filter(function(t) { return t.completed; }).length;
+        const total = card.tasks.length;
+        const percentage = total > 0 ? (completed / total) * 100 : 0;
+
+        return '<div class="card" onclick="openCard(' + card.id + ')">' +
+          '<button class="delete-card-btn" onclick="event.stopPropagation(); deleteCard(' + card.id + ')">×</button>' +
+          '<h3>' + card.name + '</h3>' +
+          '<div class="card-info">' +
+          '<div class="task-count">' + total + ' ' + (total === 1 ? 'task' : 'tasks') + '</div>' +
+          (total > 0 ? 
+            '<div class="progress-bar-container">' +
+            '<div class="progress-bar">' +
+            '<div class="progress-bar-fill" style="width: ' + percentage + '%"></div>' +
+            '</div>' +
+            '<span class="progress-text">' + completed + '/' + total + '</span>' +
+            '</div>' : '') +
+          '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    function openCard(cardId) {
+      selectedCard = cards.find(function(c) { return c.id === cardId; });
+      document.getElementById('cardsGrid').style.display = 'none';
+      document.getElementById('moodHistory').style.display = 'none';
+      document.getElementById('backBtn').classList.add('show');
+      document.getElementById('headerText').textContent = selectedCard.name;
+      renderSelectedCard();
+    }
+
+    function renderSelectedCard() {
+      const view = document.getElementById('selectedCardView');
+      view.style.display = 'block';
+      
+      const tasksHTML = selectedCard.tasks.length > 0 ? selectedCard.tasks.map(function(task) {
+        return '<div class="task-item">' +
+          '<input type="checkbox" class="task-checkbox" ' + (task.completed ? 'checked' : '') + ' onchange="toggleTask(' + task.id + ')">' +
+          '<span class="task-text ' + (task.completed ? 'completed' : '') + '">' + task.text + '</span>' +
+          '<button class="delete-task-btn" onclick="deleteTask(' + task.id + ')">×</button>' +
+          '</div>';
+      }).join('') : '<div class="empty-message">No tasks yet! Add your first task above 🍵</div>';
+
+      view.innerHTML = '<div class="selected-card-view">' +
+        '<div class="task-input-container">' +
+        '<input type="text" class="task-input" id="taskInput" placeholder="Add a new task...">' +
+        '<button class="add-task-btn" onclick="addTask()">Add</button>' +
+        '</div>' +
+        '<div class="tasks-list">' + tasksHTML + '</div>' +
+        '</div>';
+
+      document.getElementById('taskInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') addTask();
+      });
+    }
+
+    function addTask() {
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim();
+      
+      if (text && selectedCard) {
+        selectedCard.tasks.push({
+          id: Date.now(),
+          text: text,
+          completed: false
+        });
+        saveAppData();
+        input.value = '';
+        renderSelectedCard();
+      }
+      
+
+    }
+
+    function toggleTask(taskId) {
+      const task = selectedCard.tasks.find(function(t) { return t.id === taskId; });
+      task.completed = !task.completed;
+      
+      if (task.completed) {
+        showMotivation();
+        
+        const allCompleted = selectedCard.tasks.every(function(t) { return t.completed; });
+        if (allCompleted && selectedCard.tasks.length > 0) {
+          showCelebration();
+        }
+      }
+      
+      renderSelectedCard();
+      saveAppData();
+
+    }
+
+    function deleteTask(taskId) {
+      selectedCard.tasks = selectedCard.tasks.filter(function(t) { return t.id !== taskId; });
+      renderSelectedCard();
+      saveAppData();
+
+    }
+
+    function showMotivation() {
+      const toast = document.getElementById('motivationToast');
+      const motivation = MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)];
+      toast.textContent = motivation;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function showCelebration() {
+      const celebration = document.getElementById('celebration');
+      celebration.classList.add('show');
+      setTimeout(() => celebration.classList.remove('show'), 4000);
+    }
+
+    function closeCard() {
+      selectedCard = null;
+      document.getElementById('selectedCardView').style.display = 'none';
+      document.getElementById('cardsGrid').style.display = 'grid';
+      document.getElementById('backBtn').classList.remove('show');
+      document.getElementById('headerText').textContent = 'Elle';
+      updateMoodHistory();
+      renderCards();
+    }
+
+    function deleteCard(cardId) {
+      cards = cards.filter(function(c) { return c.id !== cardId; });
+      if (selectedCard && selectedCard.id === cardId) {
+        closeCard();
+      } else {
+        renderCards();
+      }
+      saveAppData();
+
+    }
+
+    // Modal handlers
+    document.getElementById('addBtn').onclick = function() {
+      if (selectedCard) {
+        document.getElementById('taskInput').focus();
+      } else {
+        document.getElementById('newCardModal').classList.add('show');
+        setTimeout(function() {
+          document.getElementById('cardNameInput').focus();
+        }, 100);
+      }
+    };
+
+    document.getElementById('backBtn').onclick = closeCard;
+
+    document.getElementById('createCardBtn').onclick = function() {
+      const input = document.getElementById('cardNameInput');
+      const name = input.value.trim();
+      
+      if (name) {
+        cards.push({
+          id: Date.now(),
+          name: name,
+          tasks: []
+        });
+        input.value = '';
+        document.getElementById('newCardModal').classList.remove('show');
+        renderCards();
+      }
+      saveAppData();
+
+    };
+
+    document.getElementById('cancelCardBtn').onclick = function() {
+      document.getElementById('cardNameInput').value = '';
+      document.getElementById('newCardModal').classList.remove('show');
+    };
+
+    document.getElementById('cardNameInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('createCardBtn').click();
+      }
+    });
+
+    // Initialize
+loadAppData();
+updateMoodHistory();
+renderCards();
+
+  </script>
+</body>
+</html>
